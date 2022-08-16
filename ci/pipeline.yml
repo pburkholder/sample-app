@@ -7,17 +7,25 @@ resources:
   icon: concourse-ci
   source:
     uri: https://github.com/cloudfoundry-tutorials/sample-app.git
-    branch: master
+    branch: main
     username: ((github_username))
     password: ((github_password))
     paths: [ci/*]
+
+- name: pipeline-source
+  type: git
+  source:
+    uri: https://github.com/cloudfoundry-tutorials/sample-app.git
+    username: ((github_username))
+    password: ((github_password))
+    paths: [ci/pipeline.yml]
 
 - name: source
   type: git
   icon: source-repository
   source:
     uri: https://github.com/cloudfoundry-tutorials/sample-app.git
-    branch: master
+    branch: main
     username: ((github_username))
     password: ((github_password))
     ignore_paths: [ci/*,README.md,LICENSE,NOTICE,release-notes/*]
@@ -59,7 +67,7 @@ resources:
   icon: text
   source:
     uri: https://github.com/cloudfoundry-tutorials/sample-app.git
-    branch: master
+    branch: main
     username: ((github_username))
     password: ((github_password))
     paths: [release-notes/*]
@@ -85,6 +93,16 @@ jobs:
 #       params: {depth: 1}
 #   - task: unit-test
 #     file: ci/ci/tasks/unit-test.yml
+
+- name: configure-pipeline
+  serial_groups: [execute]
+  plan:
+  - in_parallel:
+    - get: pipeline-source
+      trigger: true
+      params: {depth: 1}
+  - set_pipeline: self
+    file: pipeline-source/ci/pipeline.yml
 
 - name: package
   serial_groups: [version]

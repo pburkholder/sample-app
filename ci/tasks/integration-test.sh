@@ -38,6 +38,16 @@ check_load_balancing() {
 	fi
 }
 
+wait_for_service_instance() {
+  local service_name=$1
+  local guid=$(cf service --guid $service_name)
+  local status=$(cf curl /v2/service_instances/${guid} | jq -r '.entity.last_operation.state')
+  while [ "$status" == "in progress" ]; do
+    sleep 15
+    status=$(cf curl /v2/service_instances/${guid} | jq -r '.entity.last_operation.state')
+  done
+}
+
 cf api $CF_API
 cf auth
 cf t -o $CF_ORG -s $CF_SPACE
@@ -55,6 +65,7 @@ popd
 check_expected_msg "Congratulations! You have a running app."
 
 cf cs $CF_SERVICE $CF_PLAN first-push-db 
+wait_for_service_instance first-push-db
 cf bs first-push first-push-db
 cf restart first-push
 
@@ -71,3 +82,10 @@ if [[ "$kill_status" != 502 ]]; then
 fi
 sleep 5
 check_load_balancing "App did not recover after kill"
+
+# Training envars
+
+cf set-env first-push TRAINING_KEY_1 training-value-1
+cf restart first-push
+
+check_expected_msg "training-value-1"
