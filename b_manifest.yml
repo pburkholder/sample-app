@@ -1,0 +1,12 @@
+---
+applications:
+- name: sample-app-b
+  instances: 1
+  memory: 32M
+  disk_quota: 64M
+  routes: 
+    - route: sample-app-pb.app.cloud.gov
+  env:
+    TRAINING_AB_TEST: TEST_B
+  buildpacks:
+    - go_buildpack
