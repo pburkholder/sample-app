@@ -66,9 +66,7 @@ func main() {
 		}
 	}
 
-	//grow to 128Mb
-	memSize := 128 * 1024 * 1024
-	memory := make([]byte, memSize)
+	var memoryHog [][]byte
 	i := 0
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -79,12 +77,17 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
-		memory[i] = 1
-		fmt.Fprintf(os.Stderr, "Allocated %d MB of memory\n", i)
-		for k := i; k < 1024*1024; k += 1024 {
-			memory[i+k] = 1
+		// Allocate a new chunk of memory (1MB in this example)
+		chunk := make([]byte, 1024*1024) // 1 MB
+
+		// Sparsely fill up this memory chunk
+		for k := 0; k < 1024*1024; k += 1024 {
+			chunk[k] = 1
 		}
-		i += 1020 * 1024
+
+		memoryHog = append(memoryHog, chunk)
+		fmt.Fprintf(os.Stderr, "Appended memory: %d MB\n", i)
+		i += 1
 
 	})
 
