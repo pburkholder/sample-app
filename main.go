@@ -11,7 +11,7 @@ import (
 	cfenv "github.com/cloudfoundry-community/go-cfenv"
 )
 
-//Index holds fields displayed on the index.html template
+// Index holds fields displayed on the index.html template
 type Index struct {
 	AppName          string
 	AppInstanceIndex int
@@ -21,7 +21,7 @@ type Index struct {
 	SpaceName        string
 }
 
-//Service holds the name and label of a service instance
+// Service holds the name and label of a service instance
 type Service struct {
 	Name  string
 	Label string
@@ -66,6 +66,11 @@ func main() {
 		}
 	}
 
+	//grow to 128Mb
+	memSize := 128 * 1024 * 1024
+	memory := make([]byte, memSize)
+	i := 0
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate") // HTTP 1.1.
 		w.Header().Set("Pragma", "no-cache")                                   // HTTP 1.0.
@@ -73,6 +78,14 @@ func main() {
 		if err := template.ExecuteTemplate(w, "index.html", index); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
+
+		memory[i] = 1
+		fmt.Fprintf(os.Stderr, "Allocated %d MB of memory\n", i)
+		for k := i; k < 1024*1024; k += 1024 {
+			memory[i+k] = 1
+		}
+		i += 1020 * 1024
+
 	})
 
 	http.HandleFunc("/kill", func(w http.ResponseWriter, r *http.Request) {
