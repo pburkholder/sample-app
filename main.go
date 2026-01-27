@@ -70,6 +70,11 @@ func main() {
 	i := 0
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// If memoryHog is over 64Mb, fail with status 500
+		if len(memoryHog)*1024*1024 > 64*1024*1024 {
+			http.Error(w, "Out of memory", http.StatusInternalServerError)
+			return
+		}
 		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate") // HTTP 1.1.
 		w.Header().Set("Pragma", "no-cache")                                   // HTTP 1.0.
 		w.Header().Set("Expires", "0")                                         // Proxies.
